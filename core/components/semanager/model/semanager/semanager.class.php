@@ -193,35 +193,17 @@ class SEManager {
 
         $ext = implode('.', array_reverse(array_slice($fn, 0, 2))); // extension
 
-        $fnch = $this->modx->getOption('semanager.filename_tpl_chunk', null, 'ch.html');
-        if($ext === $fnch){
-            if(!is_object($this->modx->getObject('modChunk', array('static' => 1,'static_file' => $file)))){
-                return true;
-            }
+        $sql = array();
+        $elem_classes = array('modChunk', 'modPlugin', 'modSnippet', 'modTemplate');
+        foreach ($elem_classes as $elem_class) {
+            $table_name = $this->modx->getTableName($elem_class);
+            $sql[] = '(SELECT '.$table_name.'.`static`, '.$table_name.'.`static_file` FROM '.$table_name.' WHERE '.$table_name.'.`static` = 1 AND '.$table_name.'.`static_file` = "'.$file.'")';
         }
-
-        $fnpl = $this->modx->getOption('semanager.filename_tpl_plugin', null, 'pl.php');
-        if($ext === $fnpl){
-            if(!is_object($this->modx->getObject('modPlugin', array('static' => 1,'static_file' => $file)))){
-                return true;
-            }
-        }
-
-        $fnsn = $this->modx->getOption('semanager.filename_tpl_snippet', null, 'sn.php');
-        if($ext === $fnsn){
-            if(!is_object($this->modx->getObject('modSnippet', array('static' => 1,'static_file' => $file)))){
-                return true;
-            }
-        }
-
-        $fntp = $this->modx->getOption('semanager.filename_tpl_template', null, 'tp.html');
-        if($ext === $fntp){
-            if(!is_object($this->modx->getObject('modTemplate', array('static' => 1,'static_file' => $file)))){
-                return true;
-            }
-        }
-
-        return false;
+        $sql_str = implode(' UNION ', $sql);
+        $q = $this->modx->prepare($sql_str);
+        $q->execute();
+        $res = $q->fetchAll(PDO::FETCH_ASSOC);
+        return empty($res);
 
     }
 
