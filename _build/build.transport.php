@@ -14,7 +14,7 @@ set_time_limit(0);
 /* define package */
 define('PKG_NAME','SE Manager');
 define('PKG_NAME_LOWER', 'semanager');
-define('PKG_VERSION','0.2.1');
+define('PKG_VERSION','0.2.2');
 define('PKG_RELEASE','pl');
 $root = dirname(dirname(__FILE__)) . '/';
 $sources= array (
@@ -24,7 +24,7 @@ $sources= array (
     'resolvers' => $root . '_build/resolvers/',
     //'chunks' => $root.'core/components/'.PKG_NAME_LOWER.'/elements/chunks/',
     //'snippets' => $root.'core/components/'.PKG_NAME_LOWER.'/elements/snippets/',
-    //'plugins' => $root.'core/components/'.PKG_NAME_LOWER.'/elements/plugins/',
+    'plugins' => $root.'core/components/'.PKG_NAME_LOWER.'/elements/plugins/',
     'lexicon' => $root . 'core/components/'.PKG_NAME_LOWER.'/lexicon/',
     'docs' => $root.'core/components/'.PKG_NAME_LOWER.'/docs/',
     //'pages' => $root.'core/components/'.PKG_NAME_LOWER.'/elements/pages/',
@@ -34,9 +34,9 @@ $sources= array (
 unset($root); /* save memory */
 
 /* override with your own defines here (see build.config.sample.php) */
-require_once $sources['build'] . '/build.config.php';
+require_once $sources['build'] . 'build.config.php';
 require_once MODX_CORE_PATH . 'model/modx/modx.class.php';
-### require_once $sources['build'] . '/includes/functions.php';
+require_once $sources['build'] . 'includes/functions.php';
 
 
 $modx= new modX();
@@ -81,6 +81,11 @@ $attr = array(
                     xPDOTransport::UPDATE_OBJECT => true,
                     xPDOTransport::UNIQUE_KEY => 'name',
                 ),
+                'Plugins' => array(
+                    xPDOTransport::PRESERVE_KEYS => false,
+                    xPDOTransport::UPDATE_OBJECT => true,
+                    xPDOTransport::UNIQUE_KEY => 'name',
+                ),
             ),
         ),
         'Snippets' => array(
@@ -89,6 +94,11 @@ $attr = array(
             xPDOTransport::UNIQUE_KEY => 'name',
         ),
         'Chunks' => array (
+            xPDOTransport::PRESERVE_KEYS => false,
+            xPDOTransport::UPDATE_OBJECT => true,
+            xPDOTransport::UNIQUE_KEY => 'name',
+        ),
+        'Plugins' => array (
             xPDOTransport::PRESERVE_KEYS => false,
             xPDOTransport::UPDATE_OBJECT => true,
             xPDOTransport::UNIQUE_KEY => 'name',
@@ -157,6 +167,30 @@ if (empty($menu)) {
     $modx->log(modX::LOG_LEVEL_INFO,'Packaged in menu.');
 }
 unset($vehicle,$menu);
+
+/* add plugins */
+$attr[xPDOTransport::RELATED_OBJECT_ATTRIBUTES]['Plugins'] = array (
+	xPDOTransport::PRESERVE_KEYS => false,
+	xPDOTransport::UPDATE_OBJECT => true,
+	xPDOTransport::UNIQUE_KEY => 'name',
+);
+$attr[xPDOTransport::RELATED_OBJECT_ATTRIBUTES]['PluginEvents'] = array (
+	xPDOTransport::PRESERVE_KEYS => true,
+	xPDOTransport::UPDATE_OBJECT => true,
+	xPDOTransport::UNIQUE_KEY => array('pluginid','event'),
+);
+$plugins = include $sources['data'].'transport.plugins.php';
+if (!is_array($plugins)) {
+	$modx->log(modX::LOG_LEVEL_ERROR,'Could not package in plugins.');
+} else {
+	$category->addMany($plugins);
+	$modx->log(modX::LOG_LEVEL_INFO,'Packaged in '.count($plugins).' plugins.');
+}
+foreach ($plugins as $plugin) {
+    $vehicle = $builder->createVehicle($plugin,$attr);
+    $builder->putVehicle($vehicle);
+}
+unset($vehicle,$plugins);
 
 /* now pack in the license file, readme and setup options */
 $builder->setPackageAttributes(array(

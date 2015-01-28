@@ -571,8 +571,10 @@ class SEManager {
 
 
 
-    public function newElem(){
-        $files = $this->getNewFiles();
+    public function newElem(array $files = array()){
+        if (!$files) {
+            $files = $this->getNewFiles();
+        }
         $typesClass = array(
            'templates'=>array('modTemplate',$this->modx->getOption('semanager.filename_tpl_template', null, 'tp.html')),
            'chunks' =>array('modChunk',$this->modx->getOption('semanager.filename_tpl_chunk', null, 'ch.html')),

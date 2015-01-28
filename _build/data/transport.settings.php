@@ -71,4 +71,13 @@ $settings[6]->fromArray(array(
     'area' => 'Other',
 ),'',true,true);
 
+$settings[7]= $modx->newObject('modSystemSetting');
+$settings[7]->fromArray(array(
+    'key' => 'semanager.auto_create_elements',
+    'value' => false,
+    'xtype' => 'combo-boolean',
+    'namespace' => 'semanager',
+    'area' => 'Other',
+),'',true,true);
+
 return $settings;
